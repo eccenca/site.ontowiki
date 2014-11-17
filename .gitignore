@@ -1,3 +1,4 @@
 syntax: glob
 
 Makefile
+sites/local
