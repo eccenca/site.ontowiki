@@ -41,9 +41,13 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
         $model    = OntoWiki::getInstance()->selectedModel;
 
         $tmplOpt  = $this->view->templateOptions();
-        $markup   = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/dataMarkupFormat', 'RDFa');
 
+        $markup   = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/dataMarkupFormat', 'RDFa');
         $markup   = isset($options['markup'])   ? $options['markup']   : $markup;
+
+        $preventResourceUri = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/preventResourceUri', false);
+        $preventResourceUri = isset($options['preventResourceUri']) ? $options['preventResourceUri'] : $preventResourceUri;
+
         $resource = isset($options['resource']) ? $options['resource'] : $this->view->resourceUri;
 
         $html     = array();
@@ -104,7 +108,7 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
 
         switch ($markup) {
             case 'RDFa':
-                $attr .= ' resource="'.$resource.'"';
+                if (!$preventResourceUri) $attr .= ' resource="'.$resource.'"';
                 if ($type !== null) $attr .= ' typeof="'.$type.'"';
                 if ($rel)           $attr .= ' rel="'.implode(' ', $rel).'"';
                 if ($rev)           $attr .= ' rev="'.implode(' ', $rev).'"';
@@ -129,7 +133,8 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
                 /* "The itemid attribute must not be specified on elements
                     that do not have both an itemscope attribute
                     and an itemtype attribute specified" */
-                if ($type !== null) $attr   .= sprintf(' itemid="%s" itemtype="%s"', $resource, $type);
+                if (!$preventResourceUri) $attr   .= sprintf(' itemid="%s"', $resource);
+                if ($type !== null) $attr   .= sprintf(' itemtype="%s"', $type);
                 if ($rel)           $attr   .= sprintf(' itemprop="%s"', implode(' ', $rel));
                 //if ($rev)           $iprefix = sprintf('<link itemprop="%s" href="#TODO"/>%s', implode(' ', $rev), $iprefix);
                 if ($itemref) {
