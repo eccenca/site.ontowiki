@@ -45,6 +45,12 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
         $model       = OntoWiki::getInstance()->selectedModel;
         $titleHelper = new OntoWiki_Model_TitleHelper($model);
 
+//        $baseUrl     = OntoWiki::getInstance()->config->urlBase;
+        $baseUrlSchema = getEnv('HTTPS') ? 'https://' : 'http://';
+        $baseUrlHost   = getEnv('HTTP_HOST');
+        $baseUrlPath   = getEnv('REQUEST_URI');
+        $baseUrl       = $baseUrlSchema . $baseUrlHost . $baseUrlPath;
+
         // check for options and assign local vars or null
         $uri      = (isset($options['uri']))      ? (string)$options['uri']  : null;
         $literal  = (isset($options['literal']))  ? $options['literal']      : null;
@@ -57,7 +63,7 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
         $isuffix  = (isset($options['isuffix']))  ? $options['isuffix']      : '';
         $direct   = (isset($options['direct']))   ? true                     : false;
         $plain    = (isset($options['plain']))    ? true                     : false;
-        $origin   = (isset($options['origin']))   ? $options['origin']       : null;
+        $origin   = (isset($options['origin']))   ? $options['origin']       : $baseUrl;
         $relative = (isset($options['relative'])) ? true                     : false;
         $ext      = (!empty($options['ext']))     ? '.'.$options['ext']      : '';
 
@@ -98,17 +104,17 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
                 $uri   = $result[0]['resourceUri'];
             }
         }
-        if ($relative && $origin) {
-            $uri    = Erfurt_Uri::getPathTo($origin, $uri);
-        }
-
-        // generate the link URL from the resource URI
+        // generate the link URL from the resource URI and append extension if set
         if ($direct == true) {
-            $url = $uri;
+            $url = $uri.$ext;
         } else {
             $url = $this->view->Url(array('uri' => $uri));
         }
-        $url .= $ext;
+
+        if ($relative && $origin) {
+            $url    = Erfurt_Uri::getPathTo($origin, $url);
+        }
+
         if ($plain === true) {
             return $url;
         }
