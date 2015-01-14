@@ -112,7 +112,11 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
         }
 
         if ($relative && $origin) {
-            $url    = Erfurt_Uri::getPathTo($origin, $url);
+            $aliascheck = new Erfurt_Event('onResolveDomainAliasInput');
+            $aliascheck->uri = $origin;
+            $aliascheck->trigger();
+
+            $url    = Erfurt_Uri::getPathTo($aliascheck->uri, $url);
         }
 
         if ($plain === true) {
