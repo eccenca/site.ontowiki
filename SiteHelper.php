@@ -115,6 +115,15 @@ class SiteHelper extends OntoWiki_Component_Helper
         $controller = $request->getControllerName();
         $action     = $request->getActionName();
 
+        $route = new Zend_Controller_Router_Route(
+            'sitemap.xml',
+            array(
+                'controller' => 'site',
+                'action'     => 'sitemap'
+            )
+        );
+        $router->addRoute('sitemap.xml', $route);
+
         if ($router->hasRoute('empty')) {
             $emptyRoute = $router->getRoute('empty');
             $defaults   = $emptyRoute->getDefaults();
