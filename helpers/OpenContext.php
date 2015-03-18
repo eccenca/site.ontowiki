@@ -25,7 +25,8 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
      * Options (all are optional):
      * - resource - resource URI (by default, the current resource in template)
      * - type     - resource type (by default, rdf:type value for the specified resource)
-     * - extendSchemaOrgType - schema.org class that will be suffixed with the type part after / or #
+     * - extendSchemaOrgType - (String) schema.org class that will be suffixed with the type part after / or #
+     * - preferModel - (String) uses resource type from preferred model
      * - rel      - relation to the resource, string or array of strings
      * - rev      - reverse relation (from the resource), string or array of strings
      * - itemref  - microdata's itemref as an array of IDs
@@ -72,10 +73,19 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
                               $type);
             if ($types = $model->sparqlQuery($query)) {
                 $type = $types[0]['type'];
+                if (isset($options['preferModel']) && $options['preferModel']) {
+                    foreach ($types as $typeinfo) {
+                        if (strpos($typeinfo['type'], $options['preferModel']) === 0) {
+                            $type = $typeinfo['type'];
+                        }
+                    }
+                }
             }
         }
-        
-        if (isset($options['extendSchemaOrgType'])) {
+
+        if (isset($options['extendSchemaOrgType']) &&
+            $options['extendSchemaOrgType'] &&
+            strpos($type, 'http://schema.org/') !== 0) {
             if (strpos($type, '#')) {
                 $typeparts = explode('#', $type);
             }
