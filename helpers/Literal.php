@@ -104,6 +104,7 @@ class Site_View_Helper_Literal extends Zend_View_Helper_Abstract implements Site
      * - label    - content override
      * - labels   - content overrides for specified values
      * - value    - static value to use instead of querying the database
+     * - extendSchemaOrgProperty - (String) schema.org-Property that should be extended by local name of current property
      */
     public function literal($options = array())
     {
@@ -288,6 +289,25 @@ class Site_View_Helper_Literal extends Zend_View_Helper_Abstract implements Site
         }
 
         $isUri = isset($object['type']) && $object['type'] === 'uri';
+
+        // extend schema.org property
+
+        if (isset($options['extendSchemaOrgProperty']) &&
+            $options['extendSchemaOrgProperty'] &&
+            strpos($property, 'http://schema.org/') !== 0) {
+            if (strpos($property, '#')) {
+                $propertyparts = explode('#', $property);
+            }
+            else {
+                $propertyparts = explode('/', $property);
+            }
+            $lastpartid = count($propertyparts);
+            $lastpartvalue = $propertyparts[($lastpartid - 1)];
+            if (!$lastpartvalue) {
+                $lastpartvalue = 'unknown';
+            }
+            $property = $options['extendSchemaOrgProperty'] . '/' . lcfirst($lastpartvalue);
+        }
 
         switch ($markup) {
             case 'RDFa':
