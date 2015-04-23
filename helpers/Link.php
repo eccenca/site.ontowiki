@@ -45,12 +45,20 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
         $model       = OntoWiki::getInstance()->selectedModel;
         $titleHelper = new OntoWiki_Model_TitleHelper($model);
 
-//        $baseUrl     = OntoWiki::getInstance()->config->urlBase;
-        $baseUrlSchema = getEnv('HTTPS') ? 'https://' : 'http://';
-        $baseUrlHost   = getEnv('HTTP_HOST');
-        $baseUrlPath   = getEnv('REQUEST_URI');
-        $baseUrl       = $baseUrlSchema . $baseUrlHost . $baseUrlPath;
+        $originUrl = false; // origin not set
 
+        if (getEnv('HTTP_HOST')) {
+            // used via http request
+            $originSchema = getEnv('HTTPS') ? 'https://' : 'http://';
+            $originHost   = getEnv('HTTP_HOST');
+            $originPath   = getEnv('REQUEST_URI');
+            $originUrl       = $originSchema . $originHost . $originPath;
+        }
+        else {
+            // used via internal request (e.g. gearman worker job)
+            $originUrl = OntoWiki::getInstance()->extensionManager->getComponentHelper('site')->originUrl;
+        }
+        
         // check for options and assign local vars or null
         $uri      = (isset($options['uri']))      ? (string)$options['uri']  : null;
         $literal  = (isset($options['literal']))  ? $options['literal']      : null;
@@ -63,7 +71,7 @@ class Site_View_Helper_Link extends Zend_View_Helper_Abstract implements Site_Vi
         $isuffix  = (isset($options['isuffix']))  ? $options['isuffix']      : '';
         $direct   = (isset($options['direct']))   ? true                     : false;
         $plain    = (isset($options['plain']))    ? true                     : false;
-        $origin   = (isset($options['origin']))   ? $options['origin']       : $baseUrl;
+        $origin   = (isset($options['origin']))   ? $options['origin']       : $originUrl;
         $relative = (isset($options['relative'])) ? true                     : false;
         $ext      = (!empty($options['ext']))     ? '.'.$options['ext']      : '';
 
