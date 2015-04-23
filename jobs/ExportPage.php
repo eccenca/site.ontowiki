@@ -37,7 +37,7 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         $uri = preg_replace('~^https?://(.*)$~', '$1.html', $workload->resourceUri);
 
         // set internal origin url, e.g. for link helper
-        $helper->originUrl = $uri;
+        $helper->originUrl = $workload->resourceUri;
 
         if (!$helper->testCache($uri)){
             // FIXME maybe we shouldn't always regenerate there, and just use cached version if available
