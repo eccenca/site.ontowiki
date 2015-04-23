@@ -36,6 +36,9 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         // FIXME, actual uri logic is in onShouldLinkedDataRedirect & onBuildUrl, needs refactoring to be accessible
         $uri = preg_replace('~^https?://(.*)$~', '$1.html', $workload->resourceUri);
 
+        // set internal origin url, e.g. for link helper
+        $helper->originUrl = $uri;
+
         if (!$helper->testCache($uri)){
             // FIXME maybe we shouldn't always regenerate there, and just use cached version if available
             $cache = $helper->makeCache($uri);
