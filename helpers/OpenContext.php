@@ -25,6 +25,7 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
      * Options (all are optional):
      * - resource - resource URI (by default, the current resource in template)
      * - type     - resource type (by default, rdf:type value for the specified resource)
+     * - extendSchemaOrgType - schema.org class that will be suffixed with the type part after / or #
      * - rel      - relation to the resource, string or array of strings
      * - rev      - reverse relation (from the resource), string or array of strings
      * - itemref  - microdata's itemref as an array of IDs
@@ -41,9 +42,13 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
         $model    = OntoWiki::getInstance()->selectedModel;
 
         $tmplOpt  = $this->view->templateOptions();
-        $markup   = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/dataMarkupFormat', 'RDFa');
 
+        $markup   = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/dataMarkupFormat', 'RDFa');
         $markup   = isset($options['markup'])   ? $options['markup']   : $markup;
+
+        $preventResourceUri = $tmplOpt->getValue('http://ns.ontowiki.net/SysOnt/Site/preventResourceUri', false);
+        $preventResourceUri = isset($options['preventResourceUri']) ? $options['preventResourceUri'] : $preventResourceUri;
+
         $resource = isset($options['resource']) ? $options['resource'] : $this->view->resourceUri;
 
         $html     = array();
@@ -68,6 +73,21 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
             if ($types = $model->sparqlQuery($query)) {
                 $type = $types[0]['type'];
             }
+        }
+        
+        if (isset($options['extendSchemaOrgType'])) {
+            if (strpos($type, '#')) {
+                $typeparts = explode('#', $type);
+            }
+            else {
+                $typeparts = explode('/', $type);
+            }
+            $lastpartid = count($typeparts);
+            $lastpartvalue = $typeparts[($lastpartid - 1)];
+            if (!$lastpartvalue) {
+                $lastpartvalue = 'unknown';
+            }
+            $type = $options['extendSchemaOrgType'] . '/'. ucfirst($lastpartvalue);
         }
 
         if (isset($options['rel'])) {
@@ -104,7 +124,7 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
 
         switch ($markup) {
             case 'RDFa':
-                $attr .= ' resource="'.$resource.'"';
+                if (!$preventResourceUri) $attr .= ' resource="'.$resource.'"';
                 if ($type !== null) $attr .= ' typeof="'.$type.'"';
                 if ($rel)           $attr .= ' rel="'.implode(' ', $rel).'"';
                 if ($rev)           $attr .= ' rev="'.implode(' ', $rev).'"';
@@ -129,7 +149,8 @@ class Site_View_Helper_OpenContext extends Zend_View_Helper_Abstract implements 
                 /* "The itemid attribute must not be specified on elements
                     that do not have both an itemscope attribute
                     and an itemtype attribute specified" */
-                if ($type !== null) $attr   .= sprintf(' itemid="%s" itemtype="%s"', $resource, $type);
+                if (!$preventResourceUri) $attr   .= sprintf(' itemid="%s"', $resource);
+                if ($type !== null) $attr   .= sprintf(' itemtype="%s"', $type);
                 if ($rel)           $attr   .= sprintf(' itemprop="%s"', implode(' ', $rel));
                 //if ($rev)           $iprefix = sprintf('<link itemprop="%s" href="#TODO"/>%s', implode(' ', $rev), $iprefix);
                 if ($itemref) {
