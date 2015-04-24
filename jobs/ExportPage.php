@@ -45,13 +45,15 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         }
         $cache  = $helper->loadCache($uri);        
 
-        $this->urlBase  = $workload->urlBase;
-        $this->uri      = $workload->resourceUri;
-        $pattern        = "/(href=|src=)(\"|')(".str_replace("/", "\/", $workload->urlBase ).".+)(\"|')/U";
-        $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
-        $pattern        = "/()(')(".str_replace("/", "\/", $workload->urlBase ).".+)(')/U";
-        $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
-
+        if (isset($workload->useDeprecatedLinkRewrite) && $workload->useDeprecatedLinkRewrite) {
+            $this->urlBase  = $workload->urlBase;
+            $this->uri      = $workload->resourceUri;
+            $pattern        = "/(href=|src=)(\"|')(".str_replace("/", "\/", $workload->urlBase ).".+)(\"|')/U";
+            $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
+            $pattern        = "/()(')(".str_replace("/", "\/", $workload->urlBase ).".+)(')/U";
+            $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
+        }
+        
         if (!is_dir($workload->targetPath)) {
             mkdir($workload->targetPath, 0755, TRUE);
         }
