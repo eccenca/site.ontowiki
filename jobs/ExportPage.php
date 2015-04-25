@@ -39,28 +39,51 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         // set internal origin url, e.g. for link helper
         $helper->originUrl = $workload->resourceUri;
 
-        if (!$helper->testCache($uri)){
-            // FIXME maybe we shouldn't always regenerate there, and just use cached version if available
+        // TODO: add config option to use valid/invalid caches
+        // for now always re-generate cache
+        // if (!$helper->testCache($uri)){
             $cache = $helper->makeCache($uri);
-        }
-        $cache  = $helper->loadCache($uri);        
-
-        $this->urlBase  = $workload->urlBase;
-        $this->uri      = $workload->resourceUri;
-        $pattern        = "/(href=|src=)(\"|')(".str_replace("/", "\/", $workload->urlBase ).".+)(\"|')/U";
-        $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
-        $pattern        = "/()(')(".str_replace("/", "\/", $workload->urlBase ).".+)(')/U";
-        $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
-
-        if (!is_dir($workload->targetPath)) {
-            mkdir($workload->targetPath, 0755, TRUE);
-        }
-
-        $parts      = explode("/", $workload->resourceUri);
-        $fileName   = array_pop($parts);
-
-        file_put_contents($workload->targetPath.$fileName.'.html', $cache['body'] );
+        // }
+        $cache  = $helper->loadCache($uri);
 
         $this->logSuccess(sprintf('%s %d %s', $workload->msg, $cache['code'], $uri));
+
+        if (isset($workload->useDeprecatedLinkRewrite) && $workload->useDeprecatedLinkRewrite) {
+            // rewriting links to relative URLs in worker is now deprecated
+            // use relative option in template helper,
+            // or turn it on here via special configuration ``useDeprecatedLinkRewrite=true``
+            $this->urlBase  = $workload->urlBase;
+            $this->uri      = $workload->resourceUri;
+            $pattern        = "/(href=|src=)(\"|')(".str_replace("/", "\/", $workload->urlBase ).".+)(\"|')/U";
+            $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
+            $pattern        = "/()(')(".str_replace("/", "\/", $workload->urlBase ).".+)(')/U";
+            $cache['body']  = preg_replace_callback($pattern, array($this, 'callbackRelativeLink'), $cache['body']);
+        }
+        
+        if (strpos($workload->resourceUri, $workload->urlBase) !== 0) {
+            // resource uri does not contain base url
+            $this->logError(sprintf('%s', $uri . ' does not start with ' . $workload->urlBase));
+        }
+        else {
+            // remove base url and add extension to create relative file name
+            $name = substr($workload->resourceUri, strlen($workload->urlBase)) . '.html';
+            $nameparts = explode('/', $name);
+            $filename = array_pop($nameparts);
+            $dirname = $workload->targetPath . implode('/', $nameparts);
+            
+            if (!is_dir($dirname)) {
+                mkdir($dirname, 0755, TRUE);
+            }
+            
+            if (file_put_contents($dirname . '/' . $filename, $cache['body'] )) {
+                $this->logSuccess(sprintf('%s', 'Write ' . $dirname . '/' . $filename));
+            }
+            else {
+                $this->logError(sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename));
+            }
+            
+        }
+        
+        return;
     }
 }
