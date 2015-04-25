@@ -39,11 +39,12 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         // set internal origin url, e.g. for link helper
         $helper->originUrl = $workload->resourceUri;
 
-        if (!$helper->testCache($uri)){
-            // FIXME maybe we shouldn't always regenerate there, and just use cached version if available
+        // TODO: add config option to use valid/invalid caches
+        // for now always re-generate cache
+        // if (!$helper->testCache($uri)){
             $cache = $helper->makeCache($uri);
-        }
-        $cache  = $helper->loadCache($uri);        
+        // }
+        $cache  = $helper->loadCache($uri);
 
         $this->logSuccess(sprintf('%s %d %s', $workload->msg, $cache['code'], $uri));
 
