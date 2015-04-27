@@ -64,7 +64,7 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         if (strpos($workload->resourceUri, $workload->urlBase) !== 0) {
             // resource uri does not contain base url
             echo sprintf('%s', $uri . ' does not start with ' . $workload->urlBase) . PHP_EOL;
-            $this->logError(sprintf('%s', $uri . ' does not start with ' . $workload->urlBase));
+            $this->logFailure(sprintf('%s', $uri . ' does not start with ' . $workload->urlBase));
         }
         else {
             // remove base url and add extension to create relative file name
@@ -83,7 +83,7 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             }
             else {
                 echo sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename) . PHP_EOL;
-                $this->logError(sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename));
+                $this->logFailure(sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename));
             }
             
         }

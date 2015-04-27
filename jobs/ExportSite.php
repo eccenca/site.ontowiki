@@ -45,7 +45,7 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             }
             else {
                 echo sprintf('%s', 'Cannot write ' . $sm_dirname . '/' . $sm_filename) . PHP_EOL;
-                $this->logError(sprintf('%s', 'Cannot write ' . $sm_dirname . '/' . $sm_filename));
+                $this->logFailure(sprintf('%s', 'Cannot write ' . $sm_dirname . '/' . $sm_filename));
             }
             
         }
