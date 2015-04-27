@@ -33,6 +33,7 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             ));
         }
 
+        echo sprintf('%s resources', $count) . PHP_EOL;
         $this->logSuccess(sprintf('%s resources', $count));
     }
 }

@@ -45,7 +45,8 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             $cache = $helper->makeCache($uri);
         // }
         $cache  = $helper->loadCache($uri);
-
+        
+        echo sprintf('%s %d %s', $workload->msg, $cache['code'], $uri) . PHP_EOL;
         $this->logSuccess(sprintf('%s %d %s', $workload->msg, $cache['code'], $uri));
 
         if (isset($workload->useDeprecatedLinkRewrite) && $workload->useDeprecatedLinkRewrite) {
@@ -62,6 +63,7 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         
         if (strpos($workload->resourceUri, $workload->urlBase) !== 0) {
             // resource uri does not contain base url
+            echo sprintf('%s', $uri . ' does not start with ' . $workload->urlBase) . PHP_EOL;
             $this->logError(sprintf('%s', $uri . ' does not start with ' . $workload->urlBase));
         }
         else {
@@ -76,9 +78,11 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             }
             
             if (file_put_contents($dirname . '/' . $filename, $cache['body'] )) {
+                echo sprintf('%s', 'Write ' . $dirname . '/' . $filename) . PHP_EOL;
                 $this->logSuccess(sprintf('%s', 'Write ' . $dirname . '/' . $filename));
             }
             else {
+                echo sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename) . PHP_EOL;
                 $this->logError(sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename));
             }
             
