@@ -136,12 +136,6 @@ class SiteController extends OntoWiki_Controller_Component
         $compression    = $this->getParam( 'compression' );
         $siteConfig     = $this->getComponentHelper()->getSiteConfig();
 
-        $pathGenerator	= __DIR__.'/libraries/SitemapGenerator/classes/';
-        require_once ($pathGenerator.'Sitemap.php');
-        require_once ($pathGenerator.'Sitemap/URL.php');
-        require_once ($pathGenerator.'XML/Builder.php');
-        require_once ($pathGenerator.'XML/Node.php');
-
         // Here we start the object cache id
         $sitemapObjectCacheIdSource = $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
         $sitemapObjectCacheId = 'sitemap_' . md5($sitemapObjectCacheIdSource);
@@ -152,19 +146,9 @@ class SiteController extends OntoWiki_Controller_Component
         $sitemapXml         = $erfurtObjectCache->load($sitemapObjectCacheId);
         if ($sitemapXml === false) {
             $erfurtQueryCache->startTransaction($sitemapObjectCacheId);
-            $extension  = "";
-            if (!empty($siteConfig['sitemap_url_ext'])) {
-                $extension  = $siteConfig['sitemap_url_ext'];
-            }
-            $results    = $this->getComponentHelper()->getAllSitemapUris();
-            $sitemap    = new Sitemap();
-            foreach ($results as $result) {
-                $url    = new Sitemap_URL ($result['resourceUri'].$extension);
-                if (isset($result['modified']) && strlen($result['modified']))
-                    $url->setDatetime ($result['modified']);
-                $sitemap->addUrl ($url);
-            }
-            $sitemapXml	= $sitemap->render();
+
+            $sitemapXml = $this->getComponentHelper()->createSitemapXml();
+                        
             // save the page body as an object value for the object cache
             $erfurtObjectCache->save($sitemapXml, $sitemapObjectCacheId);
             // close the object cache transaction

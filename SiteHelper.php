@@ -418,6 +418,8 @@ class SiteHelper extends OntoWiki_Component_Helper
         if (!empty($siteConfig['sitemap_types'])) {
             $types  = explode(',', $siteConfig['sitemap_types']);
         }
+        
+        // TODO: use getAllURIs() as fallback if $siteConfig['sitemap_types'] is not configured
 
         foreach ($types as $nr => $type) {
             $types[$nr]    = '{?resourceUri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> '.$type.'}';
@@ -436,6 +438,45 @@ WHERE {
 ORDER BY DESC(?modified)';
         $this->loadModel();
         return $this->_model->sparqlQuery($query);
+    }
+    
+    /**
+     *  Renders sitemap XML (All resources in one file).
+     *  @access     public
+     *  @return     string XML output regarding Sitemap XML specification
+     *  @todo       add support for sitemap index
+     */
+    public function createSitemapXml()
+    {
+        // load SitemapGenerator library
+        $pathGenerator	= __DIR__.'/libraries/SitemapGenerator/classes/';
+        require_once ($pathGenerator.'Sitemap.php');
+        require_once ($pathGenerator.'Sitemap/URL.php');
+        require_once ($pathGenerator.'XML/Builder.php');
+        require_once ($pathGenerator.'XML/Node.php');
+
+        // read necesary config values from site configuration
+        $siteConfig     = $this->getSiteConfig();
+
+        $extension  = "";
+        if (!empty($siteConfig['sitemap_url_ext'])) {
+            $extension  = $siteConfig['sitemap_url_ext'];
+        }
+        
+        // get list with all resources that are part of the sitemap
+        $results    = $this->getAllSitemapUris();
+        
+        // create sitemap.xml output
+        $sitemap    = new Sitemap();
+        foreach ($results as $result) {
+            $url    = new Sitemap_URL ($result['resourceUri'].$extension);
+            if (isset($result['modified']) && strlen($result['modified']))
+                $url->setDatetime ($result['modified']);
+            $sitemap->addUrl ($url);
+        }
+        $sitemapXml	= $sitemap->render();
+
+        return $sitemapXml;
     }
     
     public function getPage($uri = null)
