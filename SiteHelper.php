@@ -370,42 +370,48 @@ class SiteHelper extends OntoWiki_Component_Helper
         $this->_site = (string)$site;
     }
 
+    // get all URIs that are rendered by itself via templates
     public function getAllURIs()
     {
-        $this->loadModel();
-        $store = OntoWiki::getInstance()->erfurt->getStore();
+        // use sitemap method if it is configured for site ext
+        $siteConfig = $this->getSiteConfig();
 
-        // get all classes with template set in some way
-        $classes = $this->_model->sparqlQuery('
-            SELECT DISTINCT ?resourceUri
-            FROM <http://starpages.dev.eccenca.com/>
-            WHERE {
-                ?resourceUri <' . self::TEMPLATE_PROP_CLASS . '> ?template.
-            }
-        ');
-        $classes = array_map(function($_) { return $_['resourceUri']; }, $classes);
+        if (empty($siteConfig['sitemap_types']) || !$URIs = $this->getAllSitemapUris()) {
+            $this->loadModel();
+            $store = OntoWiki::getInstance()->erfurt->getStore();
 
-        $closure = $store->getTransitiveClosure($this->_model, self::SUBCLASS_PROP, $classes, true);
-        $classes = array_keys($closure);
-
-        // get all resources with templates set directly or with class
-        $query  = '
-            SELECT DISTINCT ?resourceUri
-            FROM <http://starpages.dev.eccenca.com/>
-            WHERE {
-                {
-                    ?resourceUri <' . self::TEMPLATE_PROP_RESOURCE . '> ?template.
+            // get all classes with template set in some way
+            $classes = $this->_model->sparqlQuery('
+                SELECT DISTINCT ?resourceUri
+                FROM <http://starpages.dev.eccenca.com/>
+                WHERE {
+                    ?resourceUri <' . self::TEMPLATE_PROP_CLASS . '> ?template.
                 }
-                UNION
-                {
-                    ?resourceUri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?class.
-                    FILTER (
-                        ?class IN (' . implode(',', array_map(function($_) { return "<$_>"; }, $classes)) . ')
-                    )
+            ');
+            $classes = array_map(function($_) { return $_['resourceUri']; }, $classes);
+
+            $closure = $store->getTransitiveClosure($this->_model, self::SUBCLASS_PROP, $classes, true);
+            $classes = array_keys($closure);
+
+            // get all resources with templates set directly or with class
+            $query  = '
+                SELECT DISTINCT ?resourceUri
+                FROM <http://starpages.dev.eccenca.com/>
+                WHERE {
+                    {
+                        ?resourceUri <' . self::TEMPLATE_PROP_RESOURCE . '> ?template.
+                    }
+                    UNION
+                    {
+                        ?resourceUri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?class.
+                        FILTER (
+                            ?class IN (' . implode(',', array_map(function($_) { return "<$_>"; }, $classes)) . ')
+                        )
+                    }
                 }
-            }
-        ';
-        $URIs   = $this->_model->sparqlQuery($query);
+            ';
+            $URIs   = $this->_model->sparqlQuery($query);
+        }
         $URIs = array_map(function($_) { return $_['resourceUri']; }, $URIs);
         return $URIs;
     }
@@ -426,16 +432,16 @@ class SiteHelper extends OntoWiki_Component_Helper
         }
 
         $query	= '
-SELECT DISTINCT ?resourceUri ?modified
-FROM <http://schema.org/>
-WHERE {
-    '.join(' UNION ', $types).' .
-    FILTER strStarts(str(?resourceUri), "'.$siteConfig['model'].'") .
-    OPTIONAL {
-        ?resourceUri <http://purl.org/dc/terms/modified> ?modified .
-    }
-}
-ORDER BY DESC(?modified)';
+            SELECT DISTINCT ?resourceUri ?modified
+            FROM <http://schema.org/>
+            WHERE {
+                '.join(' UNION ', $types).' .
+                FILTER strStarts(str(?resourceUri), "'.$siteConfig['model'].'") .
+                OPTIONAL {
+                    ?resourceUri <http://purl.org/dc/terms/modified> ?modified .
+                }
+            }
+            ORDER BY DESC(?modified)';
         $this->loadModel();
         return $this->_model->sparqlQuery($query);
     }
