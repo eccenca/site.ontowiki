@@ -41,10 +41,12 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
 
         // TODO: add config option to use valid/invalid caches
         // for now always re-generate cache
-        // if (!$helper->testCache($uri)){
-            $cache = $helper->makeCache($uri);
-        // }
-        $cache  = $helper->loadCache($uri);
+        $cache = $helper->makeCache($uri);
+        
+        // TODO: we need parameter to overwrite invalidation time
+        // otherwise this won't work if frontend caching is disabled
+        // in datawiki configuration
+        //$cache  = $helper->loadCache($uri);
         
         echo sprintf('%s %d %s', $workload->msg, $cache['code'], $uri) . PHP_EOL;
         $this->logSuccess(sprintf('%s %d %s', $workload->msg, $cache['code'], $uri));
@@ -76,7 +78,7 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             if (!is_dir($dirname)) {
                 mkdir($dirname, 0755, TRUE);
             }
-            
+
             if (file_put_contents($dirname . '/' . $filename, $cache['body'] )) {
                 echo sprintf('%s', 'Write ' . $dirname . '/' . $filename) . PHP_EOL;
                 $this->logSuccess(sprintf('%s', 'Write ' . $dirname . '/' . $filename));
