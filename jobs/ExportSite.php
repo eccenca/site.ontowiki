@@ -30,6 +30,10 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             $sitemapXml = $helper->createSitemapXml()
            )
         {
+            if (isset($workload->dumpBase) && trim($workload->dumpBase)) {
+                $sitemapXml = str_replace(trim($workload->urlBase), trim($workload->dumpBase), $sitemapXml);
+            }
+        
             $sm_name = substr($workload->sitemapUri, strlen($workload->urlBase));
             $sm_nameparts = explode('/', $sm_name);
             $sm_filename = array_pop($sm_nameparts);
