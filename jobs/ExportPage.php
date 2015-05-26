@@ -49,8 +49,8 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         // in datawiki configuration
         //$cache  = $helper->loadCache($uri);
         
-        echo sprintf('%s %d %s', $workload->msg, $cache['code'], $uri) . PHP_EOL;
-        $this->logSuccess(sprintf('%s %d %s', $workload->msg, $cache['code'], $uri));
+        echo sprintf('%s %d %s', $workload->progress, $cache['code'], $uri) . PHP_EOL;
+        $this->logSuccess(sprintf('%s %d %s', $workload->progress, $cache['code'], $uri));
 
         if (isset($workload->useDeprecatedLinkRewrite) && $workload->useDeprecatedLinkRewrite) {
             // rewriting links to relative URLs in worker is now deprecated
@@ -66,8 +66,8 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         
         if (strpos($workload->resourceUri, $workload->urlBase) !== 0) {
             // resource uri does not contain base url
-            echo sprintf('%s', $uri . ' does not start with ' . $workload->urlBase) . PHP_EOL;
-            $this->logFailure(sprintf('%s', $uri . ' does not start with ' . $workload->urlBase));
+            echo $workload->progress . ' ' . $uri . ' does not start with ' . $workload->urlBase . PHP_EOL;
+            $this->logFailure($workload->progress . ' ' . $uri . ' does not start with ' . $workload->urlBase);
         }
         else {
             // remove base url and add extension to create relative file name
@@ -81,12 +81,12 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             }
 
             if (file_put_contents($dirname . '/' . $filename, $cache['body'] )) {
-                echo sprintf('%s', 'Write ' . $dirname . '/' . $filename) . PHP_EOL;
-                $this->logSuccess(sprintf('%s', 'Write ' . $dirname . '/' . $filename));
+                echo $workload->progress . ' ' . 'Write ' . $dirname . '/' . $filename . PHP_EOL;
+                $this->logSuccess($workload->progress . ' ' . 'Write ' . $dirname . '/' . $filename);
             }
             else {
-                echo sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename) . PHP_EOL;
-                $this->logFailure(sprintf('%s', 'Cannot write ' . $dirname . '/' . $filename));
+                echo $workload->progress . ' ' . 'Cannot write ' . $dirname . '/' . $filename . PHP_EOL;
+                $this->logFailure($workload->progress . ' ' . 'Cannot write ' . $dirname . '/' . $filename);
             }
             
         }

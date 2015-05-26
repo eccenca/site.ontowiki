@@ -67,7 +67,7 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
                 'resourceUri'   => $uri,
                 'urlBase'       => $helper->getUrlBase(),
                 'targetPath'    => $workload->targetPath,
-                'msg'           => sprintf('(%d/%d)', $nr + 1, $count),
+                'progress'           => sprintf('[%d/%d]', $nr + 1, $count),
             ));
         }
 
