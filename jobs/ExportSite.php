@@ -12,13 +12,14 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
 {
     public function run($workload)
     {
-        $helper = OntoWiki::getInstance()->extensionManager->getComponentHelper('site');
+        $datawiki = OntoWiki::getInstance();
+        $helper = $datawiki->extensionManager->getComponentHelper('site');
         $siteConfig = $helper->getSiteConfig();
 
         // FIXME is it ok to change selectedModel/selectedResource and site helper stuff here?
-        $store = OntoWiki::getInstance()->erfurt->getStore();
+        $store = $datawiki->erfurt->getStore();
         $model = $store->getModel($siteConfig['model']);
-        OntoWiki::getInstance()->selectedModel = $model;
+        $datawiki->selectedModel = $model;
 
         $helper->setUrlBase($workload->urlBase);
         
@@ -54,9 +55,12 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             
         }
 
-        // queue jobs to dump all resources with types that have templates configured
+        // queue jobs to dump all resources with types that
+        // * part of the sitemap, or
+        // * have templates configured
 
         $uris   = $helper->getAllURIs();
+        shuffle($uris); // randomize order
         $count  = count($uris);
         foreach ($uris as $nr => $uri) {
             OntoWiki::getInstance()->callJob('exportPage', array(
@@ -67,7 +71,16 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             ));
         }
 
+        $datawiki = null; unset($datawiki);
+        $helper = null; unset($helper);
+        $siteConfig = null; unset($siteConfig);
+        $store = null; unset($store);
+        $model = null; unset($model);
+        $uris = null; unset($uris);
+        
         echo sprintf('%s resources', $count) . PHP_EOL;
         $this->logSuccess(sprintf('%s resources', $count));
+        
+        return;
     }
 }

@@ -21,14 +21,15 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
 
     public function run($workload)
     {
-        $helper = OntoWiki::getInstance()->extensionManager->getComponentHelper('site');
+        $datawiki = OntoWiki::getInstance();
+        $helper = $datawiki->extensionManager->getComponentHelper('site');
         $siteConfig = $helper->getSiteConfig();
 
         // FIXME is it ok to change selectedModel/selectedResource and site helper stuff here?
-        $store = OntoWiki::getInstance()->erfurt->getStore();
+        $store = $datawiki->erfurt->getStore();
         $model = $store->getModel($siteConfig['model']);
-        OntoWiki::getInstance()->selectedModel = $model;
-        OntoWiki::getInstance()->selectedResource = new OntoWiki_Resource($workload->resourceUri, $model);
+        $datawiki->selectedModel = $model;
+        $datawiki->selectedResource = new OntoWiki_Resource($workload->resourceUri, $model);
 
         $helper->setSite($siteConfig['id']);
         $helper->setUrlBase($workload->urlBase);
@@ -89,6 +90,14 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
             }
             
         }
+        
+        $datawiki = null; unset($datawiki);
+        $helper = null; unset($helper);
+        $siteConfig = null; unset($siteConfig);
+        $store = null; unset($store);
+        $model = null; unset($model);
+        $cache = null; unset($cache);
+        $this->logSuccess('Memory Usage: ' . memory_get_usage(false) . ' / Peak: ' . memory_get_peak_usage(false) . ' / Cycles: ' . gc_collect_cycles());
         
         return;
     }
