@@ -23,6 +23,21 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
     {
         $memory_start = memory_get_usage(false);
         
+        $dieOnMemoryUsage = isset($workload->dieOnMemoryUsage) ? $workload->dieOnMemoryUsage : false;
+
+        if ($dieOnMemoryUsage && ($memory_start > $dieOnMemoryUsage)) {
+            // postpone job and terminate worker
+            $this->logFailure($workload->progress . ' ' . 'Memory Usage to high, postpone job and terminate worker.');
+            $datawiki = OntoWiki::getInstance();
+            $datawiki->callJob(
+                'exportPage',
+                $workload
+            );
+            $datawiki = null; unset($datawiki);
+            exit($workload->progress . ' ' . 'Memory Usage to high, postpone job and terminate worker.');
+            // server/worker restart is managed by supervisord
+        }
+
         if (strpos($workload->resourceUri, $workload->urlBase) !== 0) {
             // resource uri does not contain base url
             echo $workload->progress . ' ' . $uri . ' does not start with ' . $workload->urlBase . PHP_EOL;
@@ -118,9 +133,10 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         $memory_end = memory_get_usage(false);
         $this->logSuccess(
             $workload->progress . ' ' . 
-            'Memory Usage: ' . memory_get_usage(false) . 
-            ' / New: ' . ($memory_end - $memory_start) . 
-            ' / Peak: ' . memory_get_peak_usage(false) . 
+            'Memory Usage: ' . memory_get_usage(false) .
+            ' / New: ' . ($memory_end - $memory_start) .
+            ' / Peak: ' . memory_get_peak_usage(false) .
+        //    ' / Die: ' . $dieOnMemoryUsage .
             ' / Cycles: ' . gc_collect_cycles()
         );
         

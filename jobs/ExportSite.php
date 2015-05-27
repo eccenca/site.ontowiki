@@ -54,6 +54,8 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
             }
             
         }
+        
+        $dieOnMemoryUsage = isset($workload->dieOnMemoryUsage) ? $workload->dieOnMemoryUsage : false;
 
         // queue jobs to dump all resources with types that
         // * part of the sitemap, or
@@ -68,7 +70,8 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
                 'urlBase'       => $helper->getUrlBase(),
                 'targetPath'    => $workload->targetPath,
                 'progress'      => sprintf('[%d/%d]', $nr + 1, $count),
-                'postponeable'  => true
+                'postponeable'  => true,
+                'dieOnMemoryUsage'   => $dieOnMemoryUsage
             ));
         }
 
