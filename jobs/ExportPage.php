@@ -21,6 +21,8 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
 
     public function run($workload)
     {
+        $memory_start = memory_get_usage(false);
+        
         $datawiki = OntoWiki::getInstance();
         $helper = $datawiki->extensionManager->getComponentHelper('site');
         $siteConfig = $helper->getSiteConfig();
@@ -97,7 +99,15 @@ class Site_Job_ExportPage extends Erfurt_Worker_Job_Abstract
         $store = null; unset($store);
         $model = null; unset($model);
         $cache = null; unset($cache);
-        $this->logSuccess('Memory Usage: ' . memory_get_usage(false) . ' / Peak: ' . memory_get_peak_usage(false) . ' / Cycles: ' . gc_collect_cycles());
+        
+        $memory_end = memory_get_usage(false);
+        $this->logSuccess(
+            $workload->progress . ' ' . 
+            'Memory Usage: ' . memory_get_usage(false) . 
+            ' / New: ' . ($memory_end - $memory_start) . 
+            ' / Peak: ' . memory_get_peak_usage(false) . 
+            ' / Cycles: ' . gc_collect_cycles()
+        );
         
         return;
     }
