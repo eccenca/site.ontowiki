@@ -63,11 +63,12 @@ class Site_Job_ExportSite extends Erfurt_Worker_Job_Abstract
         shuffle($uris); // randomize order
         $count  = count($uris);
         foreach ($uris as $nr => $uri) {
-            OntoWiki::getInstance()->callJob('exportPage', array(
+            $datawiki->callJob('exportPage', array(
                 'resourceUri'   => $uri,
                 'urlBase'       => $helper->getUrlBase(),
                 'targetPath'    => $workload->targetPath,
-                'progress'           => sprintf('[%d/%d]', $nr + 1, $count),
+                'progress'      => sprintf('[%d/%d]', $nr + 1, $count),
+                'postponeable'  => true
             ));
         }
 
